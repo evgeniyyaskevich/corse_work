@@ -1,0 +1,8 @@
+2 3 Petkin GA 7
+2 4 Foma GA 8
+3 2 Pashkevich MA 7
+3 2 Pashkevich GA 8
+3 3 Gulin MA 7
+3 3 Gulin GA 8
+3 3 Yaskevich MA 6
+3 3 Yaskevich GA 8
