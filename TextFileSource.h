@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <stdexcept>
+#include <memory>
 
 template<typename Record>
 class TextFileSource;
@@ -19,35 +20,59 @@ public:
     typedef Record<tuple<Types...>, key<Keys...>> Record;
 private:
     ifstream in;
+    string fileName;
     bool isHasNext = true;
-    Record currentRecord;
+    Record *currentRecord = nullptr;
+    Record *nextRecord = nullptr;
 public:
 
-    explicit TextFileSource(const string &fileName) {
+    explicit TextFileSource(const string &fileName) : fileName(fileName) {
         in.open(fileName);
+        readRecord();
+        readRecord();
     }
 
-    Record getCurrentRecord() override {
+    TextFileSource(TextFileSource const &right) : TextFileSource(right.fileName) {}
+
+    Record *getCurrentRecord() override {
+
+        if (currentRecord == nullptr) {
+            readRecord();
+        }
         return currentRecord;
     }
 
-    Record readRecord() override {
+    Record *getNextRecord() override {
+
+        return nextRecord;
+    }
+
+    Record *readRecord() override {
 
         tuple<Types...> inputTuple;
+        currentRecord = nextRecord;
         if (hasNext()) {
             if (in >> inputTuple) {
-                currentRecord = Record(inputTuple);
+                nextRecord = new Record(inputTuple);
             } else {
                 isHasNext = false;
+                nextRecord = nullptr;
             }
             return currentRecord;
         }
-        throw logic_error("There are no records. User hasNext() to check it before reading.");
+        throw logic_error("There are no records. Use this::hasNext() to check it before reading.");
     }
 
     bool hasNext() override {
         return isHasNext;
     }
+
+    TextFileSource<Record>* makeCopy() override {
+        //TODO: утечка памяти, плохо. нужно исправить как-то
+        return new TextFileSource<Record>(fileName);
+    }
+
+public:
 
     virtual ~TextFileSource() {
         in.close();

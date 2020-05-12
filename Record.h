@@ -62,6 +62,10 @@ public:
         return Key<decltype(keyFields)>(keyFields);
     }
 
+    auto keyTuple() const {
+        return extractKeys<Nums...>(fields);
+    };
+
     friend ostream &operator<<(ostream &os, Record const &record) {
         return os << record.fields;
     }

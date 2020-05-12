@@ -3,6 +3,7 @@
 
 #include "Record.h"
 #include <tuple>
+#include <memory>
 
 using namespace std;
 
@@ -17,9 +18,15 @@ public:
     typedef key<Indxs...> KeyIndexes;
     typedef Record<Tuple, KeyIndexes> Record;
 
-    virtual Record getCurrentRecord() = 0;
-    virtual Record readRecord() = 0;
+    virtual Record *getCurrentRecord() = 0;
+
+    virtual Record *getNextRecord() = 0;
+
+    virtual Record *readRecord() = 0;
+
     virtual bool hasNext() = 0;
+
+    virtual DataSourceStrategy<Record>* makeCopy() = 0;
 };
 
 

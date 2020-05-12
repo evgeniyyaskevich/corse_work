@@ -153,4 +153,82 @@ std::basic_istream<CharT, Traits> &operator>>(std::basic_istream<CharT, Traits> 
     return in;
 }
 
+//========  ============
+
+template<size_t n, typename CondFuncType>
+struct FieldCondition {
+
+    explicit FieldCondition(CondFuncType _condition) : condition(_condition) {}
+
+    enum {
+        fieldNumber = n
+    };
+    CondFuncType condition;
+};
+
+template<size_t M, size_t N, typename Tuple, typename TupleCond>
+struct RecordConditionCompute {
+
+    static void isCond(bool &isCond, Tuple &t, TupleCond &tc) {
+
+        RecordConditionCompute<M, N - 1, Tuple, TupleCond>::isCond(isCond, t, tc);
+        auto fieldCondition = get<M - N>(tc);
+        auto fieldValue = get<decltype(fieldCondition)::fieldNumber>(t);
+        isCond &= fieldCondition.condition(fieldValue);
+    }
+};
+
+template<size_t M, typename Tuple, typename TupleCond>
+struct RecordConditionCompute<M, 1, Tuple, TupleCond> {
+    static void isCond(bool &isCond, Tuple &t, TupleCond &tc) {
+
+        auto fieldCondition = std::get<M - 1>(tc);
+        auto fieldValue = std::get<decltype(fieldCondition)::fieldNumber>(t);
+        isCond &= fieldCondition.condition(fieldValue);
+    }
+};
+
+template<size_t... n, typename... CondFuncObj, typename... Types>
+bool isCondition(tuple<FieldCondition<n, CondFuncObj>...> fieldConditions, tuple<Types...> &fields) {
+
+    bool isCond = true;
+    RecordConditionCompute<sizeof...(n), sizeof...(n),
+            decltype(fields), decltype(fieldConditions)>::isCond(isCond, fields, fieldConditions);
+    return isCond;
+}
+
+template<typename... Types>
+struct RecordCondition;
+
+template<size_t m, size_t... n, typename CondFuncObj, typename... restCondFuncObj>
+struct RecordCondition<FieldCondition<m, CondFuncObj>, FieldCondition<n, restCondFuncObj>...>
+        : RecordCondition<FieldCondition<n, restCondFuncObj>...> {
+
+    explicit RecordCondition(FieldCondition<m, CondFuncObj> &_fieldCondition,
+                             FieldCondition<n, restCondFuncObj> &... _restFieldConditions)
+            : fieldCondition(_fieldCondition),
+              RecordCondition<FieldCondition<n, restCondFuncObj>...>(_restFieldConditions...) {}
+
+    FieldCondition<m, CondFuncObj> fieldCondition;
+};
+
+template<size_t n, typename CondFuncObj>
+struct RecordCondition<FieldCondition<n, CondFuncObj>> {
+
+    explicit RecordCondition(FieldCondition<n, CondFuncObj> &_fieldConditon) : fieldCondition(_fieldConditon) {}
+
+    FieldCondition<n, CondFuncObj> fieldCondition;
+};
+
+template<int n, typename CondFuncObjType>
+auto make_fieldCondition(CondFuncObjType condObj) {
+    return FieldCondition<n, CondFuncObjType>(condObj);
+}
+
+template<size_t... n, typename... CondFunctObjTypes>
+auto make_recordCondition(FieldCondition<n, CondFunctObjTypes>... fieldConditions) {
+
+    return RecordCondition<FieldCondition<n, CondFunctObjTypes>...>(fieldConditions...);
+}
+
 #endif
