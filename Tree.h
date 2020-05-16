@@ -2,33 +2,35 @@
 #define COURSEPROJECTMAIN_TREE_H
 
 #include "Record.h"
+#include "FilteringPolicy.h"
 
-template<typename DataSourcePolicy>
+template<typename DataSourcePolicy, typename FilteringPolicy = NoFilteringPolicy>
 class Tree;
 
 template<
         template<class> class DataSourcePolicy,
-//        template<class> class FilteringPolicy = NoFilteringPolicy,
+        typename FilteringPolicy,
         typename... Types, int... KeyIndxs>
-class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>>> {
+class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>>, FilteringPolicy> {
 
     typedef std::tuple<Types...> Tuple;
     typedef key<KeyIndxs...> KeyIndexes;
     typedef Record<Tuple, KeyIndexes> Record;
     typedef DataSourcePolicy<Record> Source;
+    typedef FilteringPolicy FilterType;
 
     Source& source;
+    FilteringPolicy filter = FilterType();
 
     class TreeIterator {
 
         Source* source;
+        FilterType& filter;
         int keyCount = sizeof...(KeyIndxs);
         int depth = keyCount;
     public:
 
-        explicit TreeIterator(Source *_source) {
-            source = _source;
-        };
+        explicit TreeIterator(Source *_source, FilterType& _filter): source(_source), filter(_filter) {}
 
         void next() {
             if (depth >= 0) {
@@ -44,6 +46,11 @@ class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>>> {
                     }
                 }
             }
+        }
+
+        bool isFiltered() {
+
+            return filter.filter(source->getCurrentRecord());
         }
 
         bool hasNext() {
@@ -101,12 +108,14 @@ public:
 
     explicit Tree(Source &_source) : source(_source) {}
 
+    explicit Tree(Source&_source, FilteringPolicy& _filter): source(_source), filter(_filter) {};
+
     TreeIterator begin() {
-        return TreeIterator(source.makeCopy());
+        return TreeIterator(source.makeCopy(), filter);
     }
 
     TreeIterator end() {
-        return TreeIterator(nullptr);
+        return TreeIterator(nullptr, filter);
     }
 };
 

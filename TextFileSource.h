@@ -68,7 +68,7 @@ public:
     }
 
     TextFileSource<Record>* makeCopy() override {
-        //TODO: утечка памяти, плохо. нужно исправить как-то
+
         return new TextFileSource<Record>(fileName);
     }
 

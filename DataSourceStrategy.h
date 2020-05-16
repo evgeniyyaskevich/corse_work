@@ -29,5 +29,4 @@ public:
     virtual DataSourceStrategy<Record>* makeCopy() = 0;
 };
 
-
 #endif //DATASOURCESTRATEGY_H

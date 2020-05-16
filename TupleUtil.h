@@ -189,7 +189,7 @@ struct RecordConditionCompute<M, 1, Tuple, TupleCond> {
 };
 
 template<size_t... n, typename... CondFuncObj, typename... Types>
-bool isCondition(tuple<FieldCondition<n, CondFuncObj>...> fieldConditions, tuple<Types...> &fields) {
+bool isCondition(tuple<FieldCondition<n, CondFuncObj>...>& fieldConditions, tuple<Types...> &fields) {
 
     bool isCond = true;
     RecordConditionCompute<sizeof...(n), sizeof...(n),

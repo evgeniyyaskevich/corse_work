@@ -3,139 +3,114 @@
 #include "DataSourceStrategy.h"
 #include "Iterator.h"
 #include "Tree.h"
+#include "LogTreeTraversing.h"
 #include <iostream>
 #include <fstream>
 #include <cstring>
 #include <stack>
 #include <sstream>
+#include <vector>
+#include <assert.h>
 
 using namespace std;
 
-template<class RecordSubType, class KeySubType>
-struct IteratorRecord {
-    int level = 0;
-    int treeNumber = 0;
-    Record<RecordSubType, KeySubType> value{};
+void printInfo(string info) {
+    cout << "###################" << info << "###################" << endl;
+}
 
-    friend ostream &operator<<(ostream &os, IteratorRecord const &rec) {
-        os << "Level=" << rec.level << ", treeNumber=" << rec.treeNumber << ", value={" << rec.value << "}";
-        return os;
-    }
-};
+typedef tuple<int, int, string, string, int> tupleSubType;
+typedef key<0, 1, 2, 3> keySubType;
+typedef Record<tupleSubType, keySubType> RecordType;
 
 int conditionTest() {
-    typedef tuple<int, int, string, string, int> tupleSubType;
-    typedef key<0, 1, 2, 3> keySubType;
-    typedef Record<tupleSubType, keySubType> RecordType;
+
+    printInfo("ConditionTest started.");
 
     TextFileSource<RecordType> fileReader("../input1.txt");
-    Record<tupleSubType, keySubType> z = *fileReader.readRecord(), zBuf = z;
 
-    auto field0 = [](int x) { return x > 2; };
-    auto field3 = [](string x) { return x != "MA"; };
-    auto condTuple = make_tuple(make_fieldCondition<0, decltype(field0)>(field0),
-                                make_fieldCondition<3, decltype(field3)>(field3));
+    auto field0Cond = [](int courseNumber) { return courseNumber < 3; };
+    auto field3Cond = [](string subjectValue) { return subjectValue != "MA"; };
+    auto field4Cond = [](int markValue) { return markValue == 10; };
+    auto condTuple = make_tuple(make_fieldCondition<0, decltype(field0Cond)>(field0Cond),
+                                make_fieldCondition<3, decltype(field3Cond)>(field3Cond),
+                                make_fieldCondition<4, decltype(field4Cond)>(field4Cond));
 
-    if (isCondition(condTuple, z.fields)) {
-        cout << z << endl;
-    }
+    vector<RecordType *> records;
     while (fileReader.hasNext()) {
-        z = *fileReader.readRecord();
-        if (isCondition(condTuple, z.fields)) {
-            cout << z << endl;
-        }
-    }
-    return 0;
-}
-
-int treeTraversing() {
-
-    typedef tuple<int, double, int, string> recordSubType;
-    typedef key<0, 1, 2> keySubType;
-    typedef Record<recordSubType, keySubType> Record;
-
-    IteratorRecord<recordSubType, keySubType> curNode;
-    stack<IteratorRecord<recordSubType, keySubType>> st;
-    curNode.level = curNode.treeNumber = 0;
-    TextFileSource<Record> fileReader("../input.txt");
-    Record z = *fileReader.readRecord(), zBuf = z;
-    int maxLevel = 4;
-
-    int k = 0;
-    while (true) {
-        while (curNode.level <= maxLevel) {
-            curNode.value = z;
-            st.push(curNode);
-            ++curNode.level;
-            curNode.treeNumber = 1;
-        }
-
-        if (st.empty()) {
-            break;
-        }
-
-        curNode = st.top();
-        st.pop();
-        if (curNode.level == maxLevel) {
-            //print info about the leaf
-            cout << "Leaf: " << curNode << endl;
-
-            if (fileReader.hasNext()) {
-                zBuf = *fileReader.readRecord();
-                k = 1;
-                customCompare(z.fields, zBuf.fields, k);
-            } else {
-                k = -1;
-            }
-
-            if (k == maxLevel) {
-                z = zBuf;
-                ++curNode.treeNumber;
-            } else {
-                curNode.level = maxLevel + 1;
-            }
-        } else {
-            //print info about the inner node
-            cout << "Inner node: " << "Level=" << curNode.level << " treeNumber=" << curNode.treeNumber << endl;
-            if (curNode.level == k) {
-                z = zBuf;
-                ++curNode.treeNumber;
-            } else {
-                curNode.level = maxLevel + 1;
-            }
+        if (isCondition(condTuple, fileReader.readRecord()->fields)) {
+            records.push_back(fileReader.getCurrentRecord());
         }
     }
 
+    assert(records.size() == 1);
+    RecordType::Tuple fields = records.at(0)->fields;
+    assert(get<0>(fields) == 1);
+    assert(get<1>(fields) == 2);
+    assert(get<2>(fields) == "Myatin");
+    assert(get<3>(fields) == "MO");
+
+    printInfo("ConditionTest finished.");
     return 0;
 }
 
-int main() {
-    typedef tuple<int, int, string, string, int> tupleSubType;
-    typedef key<0, 1, 2, 3> keySubType;
-    typedef Record<tupleSubType, keySubType> RecordType;
+void iteratorUsing() {
 
-    IteratorRecord<tupleSubType, keySubType> curNode;
-    stack<IteratorRecord<tupleSubType, keySubType>> st;
+    printInfo("input1.txt traversing by iterator started.");
+
     TextFileSource<RecordType> fileReader("../input1.txt");
-
     Tree<TextFileSource<RecordType>> tree(fileReader);
+
+    printInfo("First option result:");
     auto it = tree.begin();
     while (it.hasNext()) {
-        cout << *it << ", depth=" << it.getDepth() << ", isLeaf=" << it.isLeaf() << ", 1st field equals "
+        cout << *it << ", depth=" << it.getDepth() << ", isLeaf=" << it.isLeaf() << ", groupNumber="
              << it.getField<1>() << endl;
         ++it;
     }
 
-    cout << "___________Second option of using iter:_________" << endl;
-
-    for(auto iter = tree.begin(); iter != tree.end(); ++iter) {
-        cout << *iter << ", depth=" << iter.getDepth() << ", isLeaf=" << iter.isLeaf() << ", 1st field equals "
+    printInfo("Second option result:");
+    for (auto iter = tree.begin(); iter != tree.end(); ++iter) {
+        cout << *iter << ", depth=" << iter.getDepth() << ", isLeaf=" << iter.isLeaf() << ", groupNumber "
              << iter.getField<1>() << endl;
     }
 
-    cout << "____Condition test_____" << endl;
+    printInfo("input1.txt traversing by iterator finished.");
+}
+
+void filterTest() {
+
+    printInfo("Filter test started.");
+
+    TextFileSource<RecordType> fileReader("../input1.txt");
+    auto field0Cond = [](int courseNumber) { return courseNumber < 3; };
+    auto field3Cond = [](string subjectValue) { return subjectValue == "MO"; };
+    auto field4Cond = [](int markValue) { return markValue == 10; };
+    auto condTuple = make_tuple(make_fieldCondition<0, decltype(field0Cond)>(field0Cond),
+                                make_fieldCondition<3, decltype(field3Cond)>(field3Cond),
+                                make_fieldCondition<4, decltype(field4Cond)>(field4Cond));
+
+    FilteringPolicy<RecordType, decltype(condTuple)> filter(condTuple);
+    Tree<TextFileSource<RecordType>, decltype(filter)> tree(fileReader, filter);
+    for (auto iter = tree.begin(); iter != tree.end(); ++iter) {
+        if (iter.isFiltered()) {
+            assert(iter.getField<0>() < 3);
+            assert(iter.getField<3>() == "MO");
+            assert(iter.getField<4>() == 10);
+            cout << *iter << ", depth=" << iter.getDepth() << ", isLeaf=" << iter.isLeaf() << ", groupNumber "
+                 << iter.getField<1>() << endl;
+        }
+    }
+
+    printInfo("Filter test finished.");
+}
+
+int main() {
+
+    filterTest();
     conditionTest();
-    cout << "______Tree traversing call______" << endl;
     treeTraversing();
+    iteratorUsing();
+
+
     return 0;
 }
