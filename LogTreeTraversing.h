@@ -31,7 +31,7 @@ int treeTraversing() {
     IteratorRecord<recordSubType, keySubType> curNode;
     stack<IteratorRecord<recordSubType, keySubType>> st;
     curNode.level = curNode.treeNumber = 0;
-    TextFileSource<Record> fileReader("../input.txt");
+    TextFileSource<Record> fileReader("../input/input.txt");
     Record z = *fileReader.readRecord(), zBuf = z;
     int maxLevel = 4;
 

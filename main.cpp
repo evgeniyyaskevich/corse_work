@@ -26,7 +26,7 @@ int conditionTest() {
 
     printInfo("ConditionTest started.");
 
-    TextFileSource<RecordType> fileReader("../input1.txt");
+    TextFileSource<RecordType> fileReader("../input/input1.txt");
 
     auto field0Cond = [](int courseNumber) { return courseNumber < 3; };
     auto field3Cond = [](string subjectValue) { return subjectValue != "MA"; };
@@ -57,7 +57,7 @@ void iteratorUsing() {
 
     printInfo("input1.txt traversing by iterator started.");
 
-    TextFileSource<RecordType> fileReader("../input1.txt");
+    TextFileSource<RecordType> fileReader("../input/input1.txt");
     Tree<TextFileSource<RecordType>> tree(fileReader);
 
     printInfo("First option result:");
@@ -81,7 +81,7 @@ void filterTest() {
 
     printInfo("Filter test started.");
 
-    TextFileSource<RecordType> fileReader("../input1.txt");
+    TextFileSource<RecordType> fileReader("../input/input1.txt");
     auto field0Cond = [](int courseNumber) { return courseNumber < 3; };
     auto field3Cond = [](string subjectValue) { return subjectValue == "MO"; };
     auto field4Cond = [](int markValue) { return markValue == 10; };
@@ -110,7 +110,7 @@ void allLevelSumExample() {
     typedef key<0, 1, 2> keySubType;
     typedef Record<tupleSubType, keySubType> RecordType;
 
-    TextFileSource<RecordType> fileReader("../input3.txt");
+    TextFileSource<RecordType> fileReader("../input/input3.txt");
     Tree<TextFileSource<RecordType>> tree(fileReader);
 
     int sum[3]{0, 0, 0};
@@ -130,6 +130,27 @@ void allLevelSumExample() {
     }
 }
 
+void averageMark() {
+
+    typedef tuple<int, string, string, int> tupleSubType;
+    typedef key<0, 1, 2> keySubType;
+    typedef Record<tupleSubType, keySubType> RecordType;
+
+    TextFileSource<RecordType> fileReader("../input/input4.txt");
+    Tree<TextFileSource<RecordType>> tree(fileReader);
+
+    int sum = 0, count = 0;
+    for (auto it = tree.begin(); it != tree.end(); ++it) {
+        if (it.isLeaf()) {
+            sum += it.getField<3>();
+            ++count;
+        } else if (it.getDepth() == 2) {
+            cout << it.getField<1>() << " - " << (double) sum / count << endl;
+            sum = count = 0;
+        }
+    }
+}
+
 int main() {
 
     filterTest();
@@ -138,6 +159,8 @@ int main() {
     iteratorUsing();
 
     allLevelSumExample();
+    averageMark();
+
 
     return 0;
 }
