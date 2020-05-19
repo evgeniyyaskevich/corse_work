@@ -104,6 +104,32 @@ void filterTest() {
     printInfo("Filter test finished.");
 }
 
+void allLevelSumExample() {
+
+    typedef tuple<int, int, int, int> tupleSubType;
+    typedef key<0, 1, 2> keySubType;
+    typedef Record<tupleSubType, keySubType> RecordType;
+
+    TextFileSource<RecordType> fileReader("../input3.txt");
+    Tree<TextFileSource<RecordType>> tree(fileReader);
+
+    int sum[3]{0, 0, 0};
+    for (auto it = tree.begin(); it != tree.end(); ++it) {
+        if (it.isLeaf()) {
+            int i = it.getDepth();
+            sum[i - 1] += it.getField<3>();
+            cout << "Leaf: " << *it << endl;
+        } else {
+            int i = it.getDepth();
+            cout << "Level=" << it.getDepth() << ", key=" << (*it).keyTuple() << ", sum=" << sum[i] << endl;
+            if (i > 0) {
+                sum[i - 1] += sum[i];
+            }
+            sum[i] = 0;
+        }
+    }
+}
+
 int main() {
 
     filterTest();
@@ -111,6 +137,7 @@ int main() {
     treeTraversing();
     iteratorUsing();
 
+    allLevelSumExample();
 
     return 0;
 }

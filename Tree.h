@@ -55,7 +55,7 @@ class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>>, Filterin
 
         bool hasNext() {
 
-            return depth != 0 || source->getNextRecord() != nullptr;
+            return source != nullptr && (depth != 0 || source->getNextRecord() != nullptr);
         }
 
         bool isLeaf() {
