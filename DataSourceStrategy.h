@@ -16,17 +16,17 @@ public:
 
     typedef std::tuple<TupleTypes...> Tuple;
     typedef key<Indxs...> KeyIndexes;
-    typedef Record<Tuple, KeyIndexes> Record;
+    typedef Record<Tuple, KeyIndexes> RecordType;
 
-    virtual Record *getCurrentRecord() = 0;
+    virtual RecordType *getCurrentRecord() = 0;
 
-    virtual Record *getNextRecord() = 0;
+    virtual RecordType *getNextRecord() = 0;
 
-    virtual Record *readRecord() = 0;
+    virtual RecordType *readRecord() = 0;
 
     virtual bool hasNext() = 0;
 
-    virtual DataSourceStrategy<Record>* makeCopy() = 0;
+    virtual DataSourceStrategy<RecordType>* makeCopy() = 0;
 };
 
 #endif //DATASOURCESTRATEGY_H

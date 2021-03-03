@@ -13,12 +13,12 @@ class Iterator<Record<std::tuple<TupleTypes...>, key<Idx...>>> {
 
     typedef std::tuple<TupleTypes...> Tuple;
     typedef key<Idx...> KeyIndexes;
-    typedef Record<Tuple, KeyIndexes> Record;
+    typedef Record<Tuple, KeyIndexes> RecordType;
 
     int depth;
     int level;
     int treeNumber;
-    DataSourceStrategy<Record> source;
+    DataSourceStrategy<RecordType> source;
 
 public:
     virtual bool isLeaf() = 0;
@@ -34,11 +34,11 @@ public:
         return get<N>(source.getCurrentRecord().fields);
     }
 
-    Record &operator*() {
+    RecordType &operator*() {
         return *(source.getCurrentRecord());
     }
 
-    Record *operator->() {
+    RecordType *operator->() {
         return source.getCurrentRecord();
     }
 

@@ -10,7 +10,7 @@ template<typename... Types, int... KeyIndxs, size_t... n, typename... CondFuncOb
 class FilteringPolicy<Record<tuple<Types...>, key<KeyIndxs...>>, tuple<FieldCondition<n, CondFuncObj>...>> {
 
 public:
-    typedef Record<tuple<Types...>, key<KeyIndxs...>> Record;
+    typedef Record<tuple<Types...>, key<KeyIndxs...>> RecordType;
     typedef tuple<FieldCondition<n, CondFuncObj>...> FieldConditionType;
 
 private:
@@ -20,7 +20,7 @@ public:
     FilteringPolicy() = default;
     explicit FilteringPolicy(FieldConditionType _conditions) : conditions(_conditions) {}
 
-    bool filter(Record* record) {
+    bool filter(RecordType* record) {
 
         return isCondition(conditions, record->fields);
     }

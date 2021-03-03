@@ -26,13 +26,13 @@ int treeTraversing() {
 
     typedef tuple<int, double, int, string> recordSubType;
     typedef key<0, 1, 2> keySubType;
-    typedef Record<recordSubType, keySubType> Record;
+    typedef Record<recordSubType, keySubType> RecordType;
 
     IteratorRecord<recordSubType, keySubType> curNode;
     stack<IteratorRecord<recordSubType, keySubType>> st;
     curNode.level = curNode.treeNumber = 0;
-    TextFileSource<Record> fileReader("input/input.txt");
-    Record z = *fileReader.readRecord(), zBuf = z;
+    TextFileSource<RecordType> fileReader("input/input.txt");
+    RecordType z = *fileReader.readRecord(), zBuf = z;
     int maxLevel = 4;
 
     int k = 0;

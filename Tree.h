@@ -15,8 +15,8 @@ class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>>, Filterin
 
     typedef std::tuple<Types...> Tuple;
     typedef key<KeyIndxs...> KeyIndexes;
-    typedef Record<Tuple, KeyIndexes> Record;
-    typedef DataSourcePolicy<Record> Source;
+    typedef Record<Tuple, KeyIndexes> RecordType;
+    typedef DataSourcePolicy<RecordType> Source;
     typedef FilteringPolicy FilterType;
 
     Source& source;
@@ -71,11 +71,11 @@ class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>>, Filterin
             return get<N>(source->getCurrentRecord()->fields);
         }
 
-        Record operator*() {
+        RecordType operator*() {
             return *source->getCurrentRecord();
         }
 
-        Record *operator->() {
+        RecordType *operator->() {
             return source->getCurrentRecord();
         }
 
