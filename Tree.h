@@ -28,9 +28,6 @@ class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>>, Filterin
         FilterType& filter;
         int keyCount = sizeof...(KeyIndxs);
         int depth = keyCount;
-    public:
-
-        explicit TreeIterator(Source *_source, FilterType& _filter): source(_source), filter(_filter) {}
 
         void next() {
             if (depth >= 0) {
@@ -47,6 +44,10 @@ class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>>, Filterin
                 }
             }
         }
+
+    public:
+
+        explicit TreeIterator(Source *_source, FilterType& _filter): source(_source), filter(_filter) {}
 
         bool isFiltered() {
 

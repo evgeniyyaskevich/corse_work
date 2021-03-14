@@ -1,7 +1,6 @@
 #include "Record.h"
 #include "TextFileSource.h"
 #include "DataSourceStrategy.h"
-#include "Iterator.h"
 #include "Tree.h"
 #include "LogTreeTraversing.h"
 #include <iostream>
