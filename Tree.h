@@ -8,15 +8,16 @@ template<typename DataSourcePolicy, typename FilteringPolicy = NoFilteringPolicy
 class Tree;
 
 template<
-        template<class> class DataSourcePolicy,
+        template<class, class> class DataSourcePolicy,
+        typename SourceFilteringPolicy,
         typename FilteringPolicy,
         typename... Types, int... KeyIndxs>
-class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>>, FilteringPolicy> {
+class Tree<DataSourcePolicy<Record<tuple<Types...>, key<KeyIndxs...>>, SourceFilteringPolicy>, FilteringPolicy> {
 
     typedef std::tuple<Types...> Tuple;
     typedef key<KeyIndxs...> KeyIndexes;
     typedef Record<Tuple, KeyIndexes> RecordType;
-    typedef DataSourcePolicy<RecordType> Source;
+    typedef DataSourcePolicy<RecordType, SourceFilteringPolicy> Source;
     typedef FilteringPolicy FilterType;
 
     Source& source;

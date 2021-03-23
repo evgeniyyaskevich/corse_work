@@ -10,14 +10,15 @@
 #include <stdexcept>
 #include <memory>
 
-template<typename Record>
+template<typename Record, typename FilteringPolicy = NoFilteringPolicy>
 class TextFileSource;
 
-template<typename... Types, int... Keys>
-class TextFileSource<Record<tuple<Types...>, key<Keys...>>>
-        : DataSourceStrategy<Record<tuple<Types...>, key<Keys...>>> {
+template<typename FilteringPolicy, typename... Types, int... Keys>
+class TextFileSource<Record<tuple<Types...>, key<Keys...>>, FilteringPolicy>
+        : public DataSourceStrategy<Record<tuple<Types...>, key<Keys...>>, FilteringPolicy> {
 public:
     typedef Record<tuple<Types...>, key<Keys...>> RecordType;
+    typedef DataSourceStrategy<Record<tuple<Types...>, key<Keys...>>, FilteringPolicy> Source;
 private:
     ifstream in;
     string fileName;
@@ -27,6 +28,12 @@ private:
 public:
 
     explicit TextFileSource(const string &fileName) : fileName(fileName) {
+        in.open(fileName);
+        readRecord();
+        readRecord();
+    }
+
+    explicit TextFileSource(const string &fileName, FilteringPolicy& _filter) : Source(_filter), fileName(fileName) {
         in.open(fileName);
         readRecord();
         readRecord();
@@ -51,25 +58,33 @@ public:
 
         tuple<Types...> inputTuple;
         currentRecord = nextRecord;
-        if (hasNext()) {
+        if (!hasNext()) {
+            throw logic_error("There are no records. Use this::hasNext() to check it before reading.");
+        }
+
+        bool read, filtered;
+        do {
             if (in >> inputTuple) {
+                read = true;
                 nextRecord = new RecordType(inputTuple);
+                filtered = !this->filter.filter(nextRecord);
             } else {
+                read = false;
                 isHasNext = false;
                 nextRecord = nullptr;
             }
-            return currentRecord;
-        }
-        throw logic_error("There are no records. Use this::hasNext() to check it before reading.");
+        } while (read && filtered);
+
+        return currentRecord;
     }
 
     bool hasNext() override {
         return isHasNext;
     }
 
-    TextFileSource<RecordType>* makeCopy() override {
+    TextFileSource<RecordType, FilteringPolicy>* makeCopy() override {
 
-        return new TextFileSource<RecordType>(fileName);
+        return new TextFileSource<RecordType, FilteringPolicy>(fileName, this->filter);
     }
 
 public:
