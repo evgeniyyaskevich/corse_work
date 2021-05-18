@@ -40,9 +40,12 @@ public:
     }
 
     RecordType *readRecord() {
-
+        
         currentRecord = nextRecord;
-        isHasNext = inputDataSource.hasNext();
+        if (!isHasNext) {
+            nextRecord = nullptr;
+            return currentRecord;
+        }
 
         auto curRecord = inputDataSource.getCurrentRecord();
         vector<decltype(curRecord)> recordsToCompose;
@@ -54,14 +57,16 @@ public:
         nextRecord = composer(&recordsToCompose);
         if (inputDataSource.hasNext()) {
             inputDataSource.readRecord();
+        } else {
+            isHasNext = false;
         }
-        
+
         return currentRecord;
     }
 
     bool hasNext() {
 
-        return isHasNext;
+        return nextRecord != nullptr;
     }
 
     DataSourceStrategy<RecordType>* makeCopy() {

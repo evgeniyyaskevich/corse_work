@@ -247,6 +247,89 @@ void allLevelSumExampleWithComputedSource() {
     }
 }
 
+void allLevelSumExampleWithChainedComputedSource() {
+
+    typedef tuple<int, int, int, int, int> tupleSubType;
+    typedef key<0, 1, 2, 3> keySubType;
+    typedef Record<tupleSubType, keySubType> RecordType;
+
+    typedef tuple<int, int, int, int> OutTupleSubType;
+    typedef key<0, 1, 2> OutKeySubType;
+    typedef Record<OutTupleSubType, OutKeySubType> OutRecordType;
+
+    TextFileSource<RecordType> fileReader("input/input5.txt");
+
+    auto composeCondition = [](auto r1, auto r2) {
+        if (r1 == nullptr || r2 == nullptr) {
+            return true;
+        } else {
+            auto r1Fields = r1->fields;
+            auto r2Fields = r2->fields;
+            return get<0>(r1Fields) == get<0>(r2Fields)
+                    && get<1>(r1Fields) == get<1>(r2Fields)
+                    && get<2>(r1Fields) == get<2>(r2Fields);
+        }
+    };
+    
+    auto composer = [] (vector<RecordType*>* records) {
+
+        auto sum = 0;
+        for (auto r : *records) {
+            sum += get<4>(r->fields);
+        }
+
+        auto fields = records->at(0)->fields;
+        auto resultTuple = make_tuple(
+            get<0>(fields),
+            get<1>(fields),
+            get<2>(fields),
+            sum
+        );
+
+        return new OutRecordType(resultTuple);
+    };
+
+    ComputedDataSource<OutRecordType, decltype(fileReader),
+         decltype(composeCondition), decltype(composer)> source(fileReader, composeCondition, composer);
+
+    auto composeCondition1 = [](auto r1, auto r2) {
+        return false;
+    };
+    
+    auto composer1 = [] (vector<OutRecordType*>* records) {
+        auto fields = records->at(0)->fields;
+        auto resultTuple = make_tuple(
+            get<0>(fields),
+            get<1>(fields),
+            get<2>(fields),
+            get<3>(fields) * 10
+        );
+
+        return new OutRecordType(resultTuple);
+    };
+
+    ComputedDataSource<OutRecordType, decltype(source),
+         decltype(composeCondition1), decltype(composer1)> source1(source, composeCondition1, composer1);
+
+    Tree<DataSourceStrategy<OutRecordType>> tree(source1);
+
+    int sum[3]{0, 0, 0};
+    for (auto it = tree.begin(); it != tree.end(); ++it) {
+        if (it.isLeaf()) {
+            int i = it.getDepth();
+            sum[i - 1] += it.getField<3>();
+            cout << "Leaf: " << *it << endl;
+        } else {
+            int i = it.getDepth();
+            cout << "Level=" << it.getDepth() << ", key=" << (*it).keyTuple() << ", sum=" << sum[i] << endl;
+            if (i > 0) {
+                sum[i - 1] += sum[i];
+            }
+            sum[i] = 0;
+        }
+    }
+}
+
 void averageMark() {
 
     // Объявим тип записи, как демонстрировалось в других примерах.
@@ -284,7 +367,8 @@ int main() {
     //iteratorUsing();
 
     //allLevelSumExample();
-    allLevelSumExampleWithComputedSource();
+    //allLevelSumExampleWithComputedSource();
+    allLevelSumExampleWithChainedComputedSource();
     // averageMark();
 
     return 0;
