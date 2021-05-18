@@ -40,13 +40,18 @@ public:
     RecordType *readRecord() {
 
         currentRecord = nextRecord;
+        // Возьмём текущую и следующую записи из предыдущего источника данных.
         auto sourceCurRec = inputDataSource.getCurrentRecord();
         auto sourceNextRec = inputDataSource.hasNext() ? inputDataSource.readRecord() : nullptr;
         if (sourceNextRec == nullptr) {
             isHasNext = false;
         }
+        // Вызовем функцию-преобразователь для двух записей.
+        // Результат выполнения пара: (записи объединены или нет, результирующая запись).
         pair<bool, RecordType*> result = sameRecordComposer(sourceCurRec, sourceNextRec);
+        // Пока в источниках есть ещё записи и предыдущие записи были объединены
         while (result.first && inputDataSource.hasNext()) {
+            // Пробуем преобразовать полученную преобразованную запись с новой
             result = difRecordComposer(result.second, inputDataSource.readRecord());
         }
         nextRecord = result.second;
