@@ -1,11 +1,12 @@
 
 #include "Record.h"
+#include <vector>
 
-template<typename Record, typename InputDataSource, typename SameRecordComposer, typename DifRecordComposer>
+template<typename Record, typename InputDataSource, typename ComposeCondition, typename RecordComposer>
 class ComputedDataSource;
 
-template<typename InputDataSource, typename SameRecordComposer, typename DifRecordComposer, typename... Types, int... Keys>
-class ComputedDataSource<Record<tuple<Types...>, key<Keys...>>, InputDataSource, SameRecordComposer, DifRecordComposer> :
+template<typename InputDataSource, typename ComposeCondition, typename RecordComposer, typename... Types, int... Keys>
+class ComputedDataSource<Record<tuple<Types...>, key<Keys...>>, InputDataSource, ComposeCondition, RecordComposer> :
     public DataSourceStrategy<Record<tuple<Types...>, key<Keys...>>> {
 
 public:
@@ -16,19 +17,20 @@ private:
     RecordType *currentRecord = nullptr;
     RecordType *nextRecord = nullptr;
     InputDataSource& inputDataSource;
-    SameRecordComposer& sameRecordComposer;
-    DifRecordComposer& difRecordComposer;
+    ComposeCondition& composeCondition;
+    RecordComposer& composer;
 
 public:
 
-    explicit ComputedDataSource(InputDataSource& _inputDataSource, SameRecordComposer& _composer, DifRecordComposer& _composer1)
-        : inputDataSource(_inputDataSource), sameRecordComposer(_composer), difRecordComposer(_composer1) {
+    explicit ComputedDataSource(InputDataSource& _inputDataSource, ComposeCondition& _composeCondition, RecordComposer& _composer)
+        : inputDataSource(_inputDataSource), composeCondition(_composeCondition), composer(_composer) {
         
         readRecord();
         readRecord();
     };
 
     RecordType *getCurrentRecord() {
+
         return currentRecord;
     }
 
@@ -40,29 +42,30 @@ public:
     RecordType *readRecord() {
 
         currentRecord = nextRecord;
-        // Возьмём текущую и следующую записи из предыдущего источника данных.
-        auto sourceCurRec = inputDataSource.getCurrentRecord();
-        auto sourceNextRec = inputDataSource.hasNext() ? inputDataSource.readRecord() : nullptr;
-        if (sourceNextRec == nullptr) {
-            isHasNext = false;
+        isHasNext = inputDataSource.hasNext();
+
+        auto curRecord = inputDataSource.getCurrentRecord();
+        vector<decltype(curRecord)> recordsToCompose;
+        recordsToCompose.push_back(curRecord);
+        
+        while (inputDataSource.hasNext() && composeCondition(curRecord, inputDataSource.getNextRecord())) {
+            recordsToCompose.push_back(inputDataSource.readRecord());
         }
-        // Вызовем функцию-преобразователь для двух записей.
-        // Результат выполнения пара: (записи объединены или нет, результирующая запись).
-        pair<bool, RecordType*> result = sameRecordComposer(sourceCurRec, sourceNextRec);
-        // Пока в источниках есть ещё записи и предыдущие записи были объединены
-        while (result.first && inputDataSource.hasNext()) {
-            // Пробуем преобразовать полученную преобразованную запись с новой
-            result = difRecordComposer(result.second, inputDataSource.readRecord());
+        nextRecord = composer(&recordsToCompose);
+        if (inputDataSource.hasNext()) {
+            inputDataSource.readRecord();
         }
-        nextRecord = result.second;
+        
         return currentRecord;
     }
 
     bool hasNext() {
+
         return isHasNext;
     }
 
     DataSourceStrategy<RecordType>* makeCopy() {
+
         return this;
     }
 };

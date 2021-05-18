@@ -195,9 +195,9 @@ void allLevelSumExampleWithComputedSource() {
 
     TextFileSource<RecordType> fileReader("input/input5.txt");
 
-    auto isShouldBeComposed = [](auto r1, auto r2) {
+    auto composeCondition = [](auto r1, auto r2) {
         if (r1 == nullptr || r2 == nullptr) {
-            return false;
+            return true;
         } else {
             auto r1Fields = r1->fields;
             auto r2Fields = r2->fields;
@@ -207,68 +207,26 @@ void allLevelSumExampleWithComputedSource() {
         }
     };
     
-    auto composeOneRecord = [](RecordType* r1) {
-        auto fields = r1->fields;
+    auto composer = [] (vector<RecordType*>* records) {
+
+        auto sum = 0;
+        for (auto r : *records) {
+            sum += get<4>(r->fields);
+        }
+
+        auto fields = records->at(0)->fields;
         auto resultTuple = make_tuple(
             get<0>(fields),
             get<1>(fields),
             get<2>(fields),
-            get<4>(fields)
+            sum
         );
-        return make_pair(false, new OutRecordType(resultTuple));
-    };
 
-    auto composeTwoRecords = [](RecordType* r1, RecordType* r2) {
-        auto r1Fields = r1->fields;
-        auto r2Fields = r2->fields;
-        auto resultTuple = make_tuple(
-            get<0>(r1Fields),
-            get<1>(r1Fields),
-            get<2>(r1Fields),
-            get<4>(r1Fields) + get<4>(r2Fields)
-        );
-        return make_pair(true, new OutRecordType(resultTuple));
-    };
-
-    auto sameTypeComposer = [&isShouldBeComposed, &composeOneRecord, &composeTwoRecords](RecordType* r1, RecordType* r2) { 
-        if (r1 == nullptr || r2 == nullptr) {
-            return composeOneRecord(r1 != nullptr ? r1 : r2);
-        } else {
-            auto r1Fields = r1->fields;
-            auto r2Fields = r2->fields;
-            if (isShouldBeComposed(r1, r2)) {
-                return composeTwoRecords(r1, r2);
-            } else {
-                return composeOneRecord(r1);
-            }
-        }
-    };
-
-    auto difTypeComposer = [&composeOneRecord, &isShouldBeComposed](OutRecordType* r1, RecordType* r2) {
-        if (r1 == nullptr || r2 == nullptr) {
-            if (r1 == nullptr) {
-                return composeOneRecord(r2);
-            } else {
-                return make_pair(false, r1);
-            }
-        } else {
-            if (isShouldBeComposed(r1, r2)) {
-                auto r1Fields = r1->fields;
-                auto resultTuple = make_tuple(
-                    get<0>(r1Fields),
-                    get<1>(r1Fields),
-                    get<2>(r1Fields),
-                    get<3>(r1Fields) + get<4>(r2->fields)
-                );
-                return make_pair(true, new OutRecordType(resultTuple));
-            } else {
-                return make_pair(false, r1);
-            }
-        }
+        return new OutRecordType(resultTuple);
     };
 
     ComputedDataSource<OutRecordType, decltype(fileReader),
-         decltype(sameTypeComposer), decltype(difTypeComposer)> source(fileReader, sameTypeComposer, difTypeComposer);
+         decltype(composeCondition), decltype(composer)> source(fileReader, composeCondition, composer);
 
     Tree<DataSourceStrategy<OutRecordType>> tree(source);
 
