@@ -183,6 +183,34 @@ void allLevelSumExample() {
     }
 }
 
+void averageMark() {
+
+    // Объявим тип записи, как демонстрировалось в других примерах.
+    typedef tuple<int, string, string, int> tupleSubType;
+    typedef key<0, 1, 2> keySubType;
+    typedef Record<tupleSubType, keySubType> RecordType;
+
+    // Опишем источник данных.
+    TextFileSource<RecordType> fileReader("input/input4.txt");
+    //Создадим объект класса Tree.
+    Tree<TextFileSource<RecordType>> tree(fileReader);
+
+    int sum = 0, count = 0;
+    for (auto it = tree.begin(); it != tree.end(); ++it) {
+        if (it.isLeaf()) { //Если вершина - лист
+            // Прибавим значение оценки(поле номер 3) в общую сумму
+            sum += it.getField<3>();
+            // Увеличим счётчик количества оценок.
+            ++count;
+        } else if (it.getDepth() == 2) { // Если глубина текущей вершины == 2 (уровень фамилии студента).
+            // Выведем фамилию студента(поле номер 1) и средний балл.
+            cout << it.getField<1>() << " - " << (double) sum / count << endl;
+            // Сбросим значения счётчиков, ибо следующие вершины будут относится к следующему студенту.
+            sum = count = 0;
+        }
+    }
+}
+
 void allLevelSumExampleWithComputedSource() {
 
     typedef tuple<int, int, int, int, int> tupleSubType;
@@ -311,7 +339,10 @@ void allLevelSumExampleWithChainedComputedSource() {
     ComputedDataSource<OutRecordType, decltype(source),
          decltype(composeCondition1), decltype(composer1)> source1(source, composeCondition1, composer1);
 
-    Tree<DataSourceStrategy<OutRecordType>> tree(source1);
+    ComputedDataSource<OutRecordType, decltype(source1),
+         decltype(composeCondition1), decltype(composer1)> source2(source1, composeCondition1, composer1);
+
+    Tree<DataSourceStrategy<OutRecordType>> tree(source);
 
     int sum[3]{0, 0, 0};
     for (auto it = tree.begin(); it != tree.end(); ++it) {
@@ -326,34 +357,6 @@ void allLevelSumExampleWithChainedComputedSource() {
                 sum[i - 1] += sum[i];
             }
             sum[i] = 0;
-        }
-    }
-}
-
-void averageMark() {
-
-    // Объявим тип записи, как демонстрировалось в других примерах.
-    typedef tuple<int, string, string, int> tupleSubType;
-    typedef key<0, 1, 2> keySubType;
-    typedef Record<tupleSubType, keySubType> RecordType;
-
-    // Опишем источник данных.
-    TextFileSource<RecordType> fileReader("input/input4.txt");
-    //Создадим объект класса Tree.
-    Tree<TextFileSource<RecordType>> tree(fileReader);
-
-    int sum = 0, count = 0;
-    for (auto it = tree.begin(); it != tree.end(); ++it) {
-        if (it.isLeaf()) { //Если вершина - лист
-            // Прибавим значение оценки(поле номер 3) в общую сумму
-            sum += it.getField<3>();
-            // Увеличим счётчик количества оценок.
-            ++count;
-        } else if (it.getDepth() == 2) { // Если глубина текущей вершины == 2 (уровень фамилии студента).
-            // Выведем фамилию студента(поле номер 1) и средний балл.
-            cout << it.getField<1>() << " - " << (double) sum / count << endl;
-            // Сбросим значения счётчиков, ибо следующие вершины будут относится к следующему студенту.
-            sum = count = 0;
         }
     }
 }
