@@ -40,7 +40,7 @@ public:
     }
 
     RecordType *readRecord() {
-        
+
         currentRecord = nextRecord;
         if (!isHasNext) {
             nextRecord = nullptr;
@@ -55,6 +55,7 @@ public:
             recordsToCompose.push_back(inputDataSource.readRecord());
         }
         nextRecord = composer(&recordsToCompose);
+        
         if (inputDataSource.hasNext()) {
             inputDataSource.readRecord();
         } else {
