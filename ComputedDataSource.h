@@ -47,13 +47,17 @@ public:
             return currentRecord;
         }
 
+        // Возьмём текущую запись из предоставленного источника данных.
         auto curRecord = inputDataSource.getCurrentRecord();
+        // Добавим текущую запись в текущий класс эквивалентности.
         vector<decltype(curRecord)> recordsToCompose;
         recordsToCompose.push_back(curRecord);
         
+        // Пока есть записи и они принадлежат текущему классу эквивалентности.
         while (inputDataSource.hasNext() && composeCondition(curRecord, inputDataSource.getNextRecord())) {
             recordsToCompose.push_back(inputDataSource.readRecord());
         }
+        // Преобразуем записи класса эквивалентности в результирующую.
         nextRecord = composer(&recordsToCompose);
         
         if (inputDataSource.hasNext()) {

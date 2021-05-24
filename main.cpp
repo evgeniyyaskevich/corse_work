@@ -162,26 +162,26 @@ void allLevelSumExample() {
     TextFileSource<RecordType> fileReader("input/input3.txt");
     Tree<TextFileSource<RecordType>> tree(fileReader);
 
-    // Создадим массив для хранения суммы на каждом уровне.
-    int sum[3]{0, 0, 0};
-    for (auto it = tree.begin(); it != tree.end(); ++it) {
-        if (it.isLeaf()) { 
-            // Получим глубину текущей вершины в дереве (номер уровня).
-            int i = it.getDepth();
-            // Прибавим значение поля к сумме на нужном уровне
-            sum[i - 1] += it.getField<3>();
-            cout << "Leaf: " << *it << endl;
-        } else {
-            int i = it.getDepth();
-            cout << "Level=" << it.getDepth() << ", key=" << (*it).keyTuple() << ", sum=" << sum[i] << endl;
-            // Прибавим к сумме на уровне выше, сумму предыдущего уровня.
-            if (i > 0) {
-                sum[i - 1] += sum[i];
-            }
-            // Обнулим значение на текущем уровне для последующих подсчётов.
-            sum[i] = 0;
+// Создадим массив для хранения суммы на каждом уровне.
+int sum[3]{0, 0, 0};
+for (auto it = tree.begin(); it != tree.end(); ++it) {
+    if (it.isLeaf()) { 
+        // Получим глубину текущей вершины в дереве (номер уровня).
+        int i = it.getDepth();
+        // Прибавим значение поля к сумме на нужном уровне
+        sum[i - 1] += it.getField<3>();
+        cout << "Leaf: " << *it << endl;
+    } else {
+        int i = it.getDepth();
+        cout << "Level=" << it.getDepth() << ", key=" << (*it).keyTuple() << ", sum=" << sum[i] << endl;
+        // Прибавим к сумме на уровне выше, сумму предыдущего уровня.
+        if (i > 0) {
+            sum[i - 1] += sum[i];
         }
+        // Обнулим значение на текущем уровне для последующих подсчётов.
+        sum[i] = 0;
     }
+}
 }
 
 void averageMark() {
@@ -224,6 +224,7 @@ void allLevelSumExampleWithComputedSource() {
 
     TextFileSource<RecordType> fileReader("input/input5.txt");
 
+    // Зададим отношение строго слабого упорядочения для записей файла.
     auto composeCondition = [](auto r1, auto r2) {
         if (r1 == nullptr || r2 == nullptr) {
             return true;
@@ -236,13 +237,16 @@ void allLevelSumExampleWithComputedSource() {
         }
     };
     
+    // Зададим функцию "суммирования" для класса эквивалентности записей.
     auto composer = [] (vector<RecordType*>* records) {
 
+        // Просуммируем значение четвёртого поля.
         auto sum = 0;
         for (auto r : *records) {
             sum += get<4>(r->fields);
         }
 
+        // Сформируем новый набор значений.
         auto fields = records->at(0)->fields;
         auto resultTuple = make_tuple(
             get<0>(fields),
@@ -254,23 +258,29 @@ void allLevelSumExampleWithComputedSource() {
         return new OutRecordType(resultTuple);
     };
 
-    ComputedDataSource<OutRecordType, decltype(fileReader),
-         decltype(composeCondition), decltype(composer)> source(fileReader, composeCondition, composer);
+    // Зададим функцию преобразования для источника данных текстового файла
+    auto cDs = map(fileReader, composeCondition, composer, OutRecordType());
+    using DsOutRecordType = typename remove_reference<decltype(cDs)>::type::RecordType;
+    Tree<DataSourceStrategy<DsOutRecordType>> tree(cDs);
 
-    Tree<DataSourceStrategy<OutRecordType>> tree(source);
-
+    // Вычислим итог (сумма значений) на каждом уровне логического дерева
+    // Создадим массив для хранения суммы на каждом уровне.
     int sum[3]{0, 0, 0};
     for (auto it = tree.begin(); it != tree.end(); ++it) {
-        if (it.isLeaf()) {
+        if (it.isLeaf()) { 
+            // Получим глубину текущей вершины в дереве (номер уровня).
             int i = it.getDepth();
+            // Прибавим значение поля к сумме на нужном уровне
             sum[i - 1] += it.getField<3>();
             cout << "Leaf: " << *it << endl;
         } else {
             int i = it.getDepth();
             cout << "Level=" << it.getDepth() << ", key=" << (*it).keyTuple() << ", sum=" << sum[i] << endl;
+            // Прибавим к сумме на уровне выше, сумму предыдущего уровня.
             if (i > 0) {
                 sum[i - 1] += sum[i];
             }
+            // Обнулим значение на текущем уровне для последующих подсчётов.
             sum[i] = 0;
         }
     }
@@ -461,9 +471,9 @@ int main() {
     //iteratorUsing();
 
     //allLevelSumExample();
-    //allLevelSumExampleWithComputedSource();
+    allLevelSumExampleWithComputedSource();
     //allLevelSumExampleWithChainedComputedSource();
-    allLevelSumExampleWithStreamedSource();
+    //allLevelSumExampleWithStreamedSource();
     // averageMark();
 
     return 0;
